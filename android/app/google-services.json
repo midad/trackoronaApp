@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "834194203291",
+    "firebase_url": "https://trackorona-ma.firebaseio.com",
+    "project_id": "trackorona-ma",
+    "storage_bucket": "trackorona-ma.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:834194203291:android:7c912c117779acea17dc3e",
+        "android_client_info": {
+          "package_name": "com.trackorona"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "834194203291-lcrab2g9mjheuk69fnfoh569mnqim4o6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.trackorona",
+            "certificate_hash": "74f112e8168dfb3d4f5855079805ddff36139c35"
+          }
+        },
+        {
+          "client_id": "834194203291-7ioq962ri9dnufupq2rtbqlfc9nao166.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCPxo4VkaX5gi8Y3nFnnbs7-8QbHTP-Uo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "834194203291-7ioq962ri9dnufupq2rtbqlfc9nao166.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
