@@ -17,16 +17,18 @@ import Home from './src/screens/home';
 import Analytics from './src/screens/analytics';
 import Distribution from './src/screens/distribution';
 import Test from './src/screens/test';
+import AutoTest from './src/screens/test/autoTest';
+import VoiceTest from './src/screens/test/voiceTest';
 import {AsyncStorage} from 'react-native';
 import api from './utils/api';
 import {mainBlack} from './utils/globalStyles/colors';
 import {primaryFont} from './utils/globalStyles/fonts';
 import Profil from './src/screens/profil';
-import {replaceObject} from './utils/helpers';
+import {replaceObject, getUserData} from './utils/helpers';
 import Spinner from 'react-native-loading-spinner-overlay';
 import PushNotification from 'react-native-push-notification';
-
-
+import Midad from './src/screens/midad';
+import {UserContext} from './src/context/UserContext';
 
 const Stack = createStackNavigator();
 const {Navigator, Screen} = Stack;
@@ -36,49 +38,37 @@ const App: () => React$Node = () => {
   const [isLogged, setIsLogged] = useState(false);
   const [isProfilFilled, setIsProfilFilled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [userData, setUserData] = useState({});
 
-  const getUserData = async () => {
-    setIsLoading(true);
+  // const getUserData = async () => {
+  //   setIsLoading(true);
+  //   try {
+  //     const data = await AsyncStorage.getItem('userData');
+  //     const parsedData = JSON.parse(data);
+
+  //     if (parsedData.token && parsedData.user) {
+  //       setIsLogged(true);
+  //     }
+  //     if (parsedData.user.age && parsedData.user.gender) {
+  //       setIsProfilFilled(true);
+  //     }
+  //     return parsedData;
+  //   } catch (error) {
+  //     console.log({error});
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  const setUserDataAndSyncStore = async newUserData => {
     try {
-      const data = await AsyncStorage.getItem('userData');
-      const parsedData = JSON.parse(data);
-
-      console.log({parsedData});
-      if (parsedData.token && parsedData.user) {
-        setIsLogged(true);
-      }
-      if (parsedData.user.age && parsedData.user.gender) {
-        setIsProfilFilled(true);
-      }
-      return parsedData;
-    } catch (error) {
-      console.log({error});
-    }
-    finally {
-      setIsLoading(false);
-    }
-  };
-
-  const getUpdatedUserData = async () => {
-    const {token} = await getUserData();
-    try {
-      const data = await (await api.get(
-        `/users/me?access_token=${token}`,
-      )).json();
-      console.log({data});
-      return data;
-    } catch (error) {
-      console.log({error});
-    }
-  };
-
-  const setUserData = async () => {
-    try {
+      console.log({newUserData}, '_______+++++');
       const newUserDataJson = await replaceObject(
         await getUserData(),
         'user',
-        await getUpdatedUserData(),
+        newUserData,
       );
+      setUserData(newUserDataJson);
       await AsyncStorage.removeItem('userData');
       await AsyncStorage.setItem('userData', JSON.stringify(newUserDataJson));
       return true;
@@ -88,12 +78,36 @@ const App: () => React$Node = () => {
   };
 
   useEffect(() => {
-    async function execute() {
-      await setUserData();
-    }
+    getUserData().then(res => {
+      console.log({res});
 
-    execute();
+      if (!!res.token && !!res.user) {
+        setIsLogged(true);
+      }
+      if (res?.user?.age) {
+        setIsProfilFilled(true);
+      }
+      setUserData(res);
+    });
+    // console.log()
+    // async function execute() {
+    //   await getUserData();
+    // }
+
+    // execute();
+    // console.log({res})
+    // setUserData(res);
   }, []);
+
+  // useEffect(() => {
+  //   console.log({userData}, '******')
+  //   if (userData.token && userData.user) {
+  //     setIsLogged(true);
+  //   }
+  //   if (userData?.user?.age && userData?.user?.gender) {
+  //     setIsProfilFilled(true);
+  //   }
+  // });
 
   // useEffect(async () => {
   //   AsyncStorage.getItem('userData')
@@ -113,7 +127,7 @@ const App: () => React$Node = () => {
   // useEffect(() => {
   //   console.log({isLogged, isProfilFilled});
   // }, [isLogged, isProfilFilled]);
-
+  console.log({MMMMMMMMMMMMM: isLogged && isProfilFilled});
   if (isLoading) {
     return <Spinner visible={true} />;
   }
@@ -128,47 +142,84 @@ const App: () => React$Node = () => {
   // }
 
   return (
-    <NavigationContainer>
-      <Navigator initialRouteName={isLogged && isProfilFilled ? 'Home' : 'Register'}>
-        <Screen
-          name="Register"
-          component={Register}
-          options={{headerShown: false}}
-        />
-        <Screen
-          name="CodeVerification"
-          component={CodeVerification}
-          options={{
-            headerTitle: 'التحقق من الهوية',
-            headerTitleAlign: 'center',
-            headerTintColor: mainBlack,
-            headerTitleStyle: {
-              fontWeight: 'bold',
-              fontSize: 26,
-              color: mainBlack,
-              fontFamily: primaryFont,
-            },
-          }}
-        />
-        <Screen
-          name="Profil"
-          component={Profil}
-          options={{headerShown: false}}
-        />
-        <Screen name="Home" component={Home} options={{headerShown: false}} />
-        <Screen
-          name="Analytics"
-          component={Analytics}
-          options={{headerShown: false}}
-        />
-        <Screen name="Test" component={Test} options={{headerShown: false}} />
-        <Screen
-          name="Distribution"
-          component={Distribution}
-          options={{headerShown: false}}
-        />
-      </Navigator>
-    </NavigationContainer>
+    <UserContext.Provider
+      value={{
+        userData: userData,
+        setUserDataAndSyncStore: setUserDataAndSyncStore,
+      }}>
+      <NavigationContainer>
+        <Navigator
+          initialRouteName={isLogged && isProfilFilled ? 'Home' : 'Register'}>
+          {isLogged && isProfilFilled ? (
+            <>
+              <Screen
+                name="Home"
+                component={Home}
+                options={{headerShown: false}}
+              />
+              <Screen
+                name="Analytics"
+                component={Analytics}
+                options={{headerShown: false}}
+              />
+              <Screen
+                name="Test"
+                component={Test}
+                options={{headerShown: false}}
+              />
+              <Screen
+                name="AutoTest"
+                component={AutoTest}
+                options={{headerShown: false}}
+              />
+              <Screen
+                name="VoiceTest"
+                component={VoiceTest}
+                options={{headerShown: false}}
+              />
+              <Screen
+                name="Distribution"
+                component={Distribution}
+                options={{headerShown: false}}
+              />
+              <Screen
+                name="Midad"
+                component={Midad}
+                options={{headerShown: false}}
+              />
+            </>
+          ) : (
+            <>
+              <Screen
+                name="Register"
+                component={Register}
+                options={{headerShown: false}}
+              />
+              <Screen
+                name="CodeVerification"
+                component={CodeVerification}
+                options={{
+                  headerTitle: 'التحقق من الهوية',
+                  headerTitleAlign: 'center',
+                  headerTintColor: mainBlack,
+                  headerTitleStyle: {
+                    fontWeight: 'bold',
+                    fontSize: 26,
+                    color: mainBlack,
+                    fontFamily: primaryFont,
+                  },
+                }}
+              />
+              <Screen
+                name="Profil"
+                component={Profil}
+                options={{headerShown: false}}
+              />
+            </>
+          )}
+        </Navigator>
+      </NavigationContainer>
+    </UserContext.Provider>
   );
 };
 

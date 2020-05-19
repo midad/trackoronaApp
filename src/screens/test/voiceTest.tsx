@@ -13,12 +13,16 @@ import {
   TouchableOpacity,
   View,
   AsyncStorage,
+  ScrollView,
+  SafeAreaView,
+  Image,
 } from 'react-native';
 import React, {Component, Fragment} from 'react';
 import {Button, Flex, WhiteSpace} from '@ant-design/react-native';
-import {mainBlue} from '../../../utils/globalStyles/colors';
-import {secondaryFont} from '../../../utils/globalStyles/fonts';
+import {mainBlue, mainBlack} from '../../../utils/globalStyles/colors';
+import {secondaryFont, primaryFont} from '../../../utils/globalStyles/fonts';
 import api from '../../../utils/api';
+import VoiceTestCard from '../../components/voiceTestCard';
 
 interface State {
   isLoggingIn: boolean;
@@ -56,48 +60,44 @@ class VoiceTest extends Component<any, State> {
   }
 
   public render() {
-
     return (
       <>
-        {voiceTestSentences.map((sentence, index) => (
-          <View
-            key={index}
+        <Flex
+          justify="between"
+          style={{
+            backgroundColor: mainBlue,
+            paddingTop: 35,
+            paddingHorizontal: 40,
+          }}>
+          <Image
+            source={require('../../../assets/img/trackoronaWhite.png')}
             style={{
-              padding: 10,
-              borderRadius: 25,
-              backgroundColor: mainBlue,
-              marginBottom: 15,
-            }}>
+              width: 136,
+              height: 14,
+              resizeMode: 'stretch',
+            }}
+          />
+          <TouchableOpacity
+            onPress={() => this.props.navigation.navigate('Test')}>
             <Text
               style={{
-                textAlign: 'right',
-                marginBottom: 5,
-                fontFamily: secondaryFont,
-                lineHeight: 20,
                 color: 'white',
+                fontSize: 24,
+                fontFamily: primaryFont,
+                borderBottomWidth: 1,
+                borderBottomColor: 'white',
               }}>
-              {sentence}
+              رجوع
             </Text>
-            <Flex justify="between">
-              <Text style={{color: 'white'}}>{this.state.recordTime}</Text>
-              <View style={{flexDirection: 'row'}}>
-                <Button
-                  type="warning"
-                  style={{marginRight: 12}}
-                  onPress={this.onStopRecord}>
-                  <Text style={{fontSize: 14, fontFamily: secondaryFont}}>
-                    وقف التسجيل
-                  </Text>
-                </Button>
-                <Button onPress={this.onStartRecord}>
-                  <Text style={{fontSize: 14, fontFamily: secondaryFont}}>
-                    بداية التسجيل
-                  </Text>
-                </Button>
-              </View>
-            </Flex>
-          </View>
-        ))}
+          </TouchableOpacity>
+        </Flex>
+        <ScrollView>
+          <SafeAreaView style={styles.container}>
+            {voiceTestSentences.map((sentence, index) => (
+              <VoiceTestCard key={index} testText={sentence} />
+            ))}
+          </SafeAreaView>
+        </ScrollView>
       </>
     );
   }
@@ -252,3 +252,66 @@ class VoiceTest extends Component<any, State> {
 }
 
 export default VoiceTest;
+
+const styles = StyleSheet.create({
+  container: {
+    paddingRight: 40,
+    paddingLeft: 40,
+    paddingTop: 40,
+    paddingBottom: 80,
+    direction: 'rtl',
+    flex: 1,
+    backgroundColor: mainBlue,
+  },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: 25,
+    padding: 25,
+    marginBottom: 25,
+  },
+  segment: {
+    height: 30,
+    fontSize: 16,
+    fontFamily: secondaryFont,
+  },
+  cardText: {
+    fontSize: 18,
+    textAlign: 'right',
+    marginBottom: 24,
+    color: mainBlack,
+    fontFamily: secondaryFont,
+    lineHeight: 30,
+  },
+  cardNumber: {
+    textAlign: 'center',
+    fontWeight: 'bold',
+    fontSize: 40,
+    color: 'red',
+  },
+  probability: {
+    textAlign: 'center',
+    fontWeight: 'bold',
+    fontSize: 80,
+    color: 'red',
+  },
+  headline: {
+    fontFamily: primaryFont,
+    fontSize: 31,
+    textAlign: 'right',
+  },
+  subHeadline: {
+    fontFamily: secondaryFont,
+    fontSize: 14,
+    textAlign: 'right',
+    marginBottom: 30,
+    lineHeight: 22,
+  },
+  textButton: {
+    fontFamily: secondaryFont,
+  },
+  error: {
+    fontFamily: secondaryFont,
+    fontSize: 16,
+    color: 'red',
+  },
+});

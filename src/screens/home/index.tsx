@@ -4,7 +4,7 @@
  * @flow
  */
 
-import React, {useState, useLayoutEffect, useEffect} from 'react';
+import React, {useState, useLayoutEffect, useEffect, useContext} from 'react';
 import {
   StyleSheet,
   Text,
@@ -26,6 +26,7 @@ import api from '../../../utils/api';
 import {primaryFont, secondaryFont} from '../../../utils/globalStyles/fonts';
 import {calculateHoursFromDate, handleHours, getCurrentCoordinates} from '../../../utils/helpers';
 import PushNotification from 'react-native-push-notification';
+import { UserContext } from '../../context/UserContext';
 
 const bgRed = require('../../../assets/img/bg-red.png');
 const bgGray = require('../../../assets/img/bg-gray.png');
@@ -49,6 +50,7 @@ const Home: (navigation) => React$Node = ({navigation}) => {
   });
 
   const [nearbyDevices, setNearbyDevices] = useState([]);
+  const {userData, setUserDataAndSyncStore} = useContext(UserContext);
 
   useEffect(() => {
     BleManager.start().then(() => {
@@ -86,8 +88,8 @@ const Home: (navigation) => React$Node = ({navigation}) => {
           temp.push(args.id);
           console.log({temp});
           setNearbyDevices(temp);
-          const data = await AsyncStorage.getItem('userData');
-          const userData = JSON.parse(data);
+          // const data = await AsyncStorage.getItem('userData');
+          // const userData = JSON.parse(data);
           // console.log({id: userData.user.id});
           PushNotification.localNotification({
             /* Android Only Properties */
@@ -124,20 +126,21 @@ const Home: (navigation) => React$Node = ({navigation}) => {
             // repeatType: 'day', // (optional) Repeating interval. Check 'Repeating Notifications' section for more info.
             // actions: '["Yes", "No"]', // (Android only) See the doc for notification actions to know more
           });
-          await api.put(`/users/updateContactedPeople/${userData.user.id}`, {
+          const res = await api.put(`/users/updateContactedPeople/${userData.user.id}`, {
             contactedPeople: {
               deviceId: args.id,
               rssi: args.rssi,
               location: 'here',
             },
           });
+          setUserDataAndSyncStore(res.json());
         }
       },
     );
   }, []);
 
   useEffect(() => {
-    getCurrentCoordinates();
+    getCurrentCoordinates(userData, setUserDataAndSyncStore);
   });
 
   const getStats = () => {
@@ -160,7 +163,6 @@ const Home: (navigation) => React$Node = ({navigation}) => {
           parseInt(day),
           parseInt(hour.replace('H', '').trim()),
         );
-        console.log({constructDate});
         setStats({
           Confirmed: tested_pos,
           Date: new Date(constructDate).toISOString(),
@@ -168,41 +170,40 @@ const Home: (navigation) => React$Node = ({navigation}) => {
           Recovered: healed,
         });
       });
-    console.log({stats});
   }, [stats.Date]);
 
-  PushNotification.configure({
-    onRegister: function(token) {
-      console.log('TOKEN:', token);
-    },
+  // PushNotification.configure({
+  //   onRegister: function(token) {
+  //     console.log('TOKEN:', token);
+  //   },
 
-    onNotification: function(notification) {
-      console.log('NOTIFICATION:', notification);
-      notification.finish(PushNotificationIOS.FetchResult.NoData);
-    },
+  //   onNotification: function(notification) {
+  //     console.log('NOTIFICATION:', notification);
+  //     notification.finish(PushNotificationIOS.FetchResult.NoData);
+  //   },
 
-    // ANDROID ONLY: GCM or FCM Sender ID (product_number) (optional - not required for local notifications, but is need to receive remote push notifications)
-    // senderID: "YOUR GCM (OR FCM) SENDER ID",
+  //   // ANDROID ONLY: GCM or FCM Sender ID (product_number) (optional - not required for local notifications, but is need to receive remote push notifications)
+  //   // senderID: "YOUR GCM (OR FCM) SENDER ID",
 
-    // IOS ONLY (optional): default: all - Permissions to register.
-    permissions: {
-      alert: true,
-      badge: true,
-      sound: true,
-    },
+  //   // IOS ONLY (optional): default: all - Permissions to register.
+  //   permissions: {
+  //     alert: true,
+  //     badge: true,
+  //     sound: true,
+  //   },
 
-    // Should the initial notification be popped automatically
-    // default: true
-    popInitialNotification: true,
+  //   // Should the initial notification be popped automatically
+  //   // default: true
+  //   popInitialNotification: true,
 
-    /**
-     * (optional) default: true
-     * - Specified if permissions (ios) and token (android and ios) will requested or not,
-     * - if not, you must call PushNotificationsHandler.requestPermissions() later
-     */
-    requestPermissions: true,
-  });
-
+  //   /**
+  //    * (optional) default: true
+  //    * - Specified if permissions (ios) and token (android and ios) will requested or not,
+  //    * - if not, you must call PushNotificationsHandler.requestPermissions() later
+  //    */
+  //   requestPermissions: true,
+  // });
+console.log({userData})
   return (
     <ScrollView>
       <SafeAreaView style={styles.container}>
@@ -250,7 +251,7 @@ const Home: (navigation) => React$Node = ({navigation}) => {
             </TouchableOpacity>
             <TouchableOpacity
               style={{...styles.menuCard, marginTop: -5}}
-              onPress={() => navigation.navigate('Analytics')}>
+              onPress={() => navigation.navigate('Midad')}>
               <ImageBackground source={mask} style={styles.bgMenuCard}>
                 <Text style={{...styles.textMenuCard, fontSize: 26}}>
                   معطيات مداد

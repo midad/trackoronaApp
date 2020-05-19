@@ -84,7 +84,7 @@ const Test: (navigation) => React$Node = ({navigation}) => {
   const [viewResult, setViewResult] = useState(false);
   // const [userData, setUserData] = useState({});
   // const {userData, setUserData} = route.params;
-  const [userData, setUserDataAndSyncStore] = useContext(UserContext);
+  const {userData, setUserDataAndSyncStore} = useContext(UserContext);
   const [error, setError] = useState('');
   const [isSending, setIsSending] = useState(false);
 
@@ -251,12 +251,9 @@ const Test: (navigation) => React$Node = ({navigation}) => {
         .then(respJson => {
           console.log({respJson});
           if (respJson.illnessScore) {
-            const newUserDataJson = replaceObject(userData, 'user', respJson);
-            console.log({newUserDataJson});
-            if (newUserDataJson.token) {
-              setViewResult(true);
-              setUserDataAndSyncStore(newUserDataJson);
-            }
+            // const newUserDataJson = replaceObject(userData, 'user', respJson);
+            // console.log({newUserDataJson});
+            setUserDataAndSyncStore(respJson);
           }
         });
     } catch (error) {
@@ -284,7 +281,11 @@ const Test: (navigation) => React$Node = ({navigation}) => {
             resizeMode: 'stretch',
           }}
         />
-        <TouchableOpacity onPress={() => setShowModal(true)}>
+        <TouchableOpacity
+          onPress={() => {
+            setShowModal(true);
+            canSeeResult && updateScore();
+          }}>
           <Text
             style={{
               color: 'white',
@@ -311,7 +312,8 @@ const Test: (navigation) => React$Node = ({navigation}) => {
       </Flex>
       <ScrollView>
         <SafeAreaView style={styles.container}>
-          <Text style={{...styles.headline, color: 'white', marginVertical: 45}}>
+          <Text
+            style={{...styles.headline, color: 'white', marginVertical: 45}}>
             الاختبار التفاعلي
           </Text>
           {YesNoLittleSometimesTestQuestions.map((question, index) => (
@@ -447,7 +449,7 @@ const Test: (navigation) => React$Node = ({navigation}) => {
               رجوع
             </Button>
           </View>
-        ) : viewResult ? (
+        ) : (
           <View
             style={{
               paddingVertical: 20,
@@ -493,36 +495,6 @@ const Test: (navigation) => React$Node = ({navigation}) => {
             <Button onPress={() => setShowModal(false)}>
               <Text style={styles.textButton}>إغلاق</Text>
             </Button>
-          </View>
-        ) : (
-          <View
-            style={{
-              paddingVertical: 20,
-              paddingHorizontal: 20,
-              backgroundColor: 'white',
-            }}>
-            <Text style={{...styles.cardText, marginBottom: 10}}>
-              لاختبار أكثر دقة، ننصحك بالقيام بهذا الاختبار الصوتي، وذلك عبر
-              تسجيل العبارات أسفله من أجل تحليل نبرة صوتك؛ أوقف التسجيل عند
-              انقطاع نفسك
-            </Text>
-            <WhiteSpace size="lg" />
-            <VoiceTest />
-            <WhiteSpace size="lg" />
-            <Flex justify="between">
-              <Button onPress={updateScore}>
-                <Text style={styles.textButton}>تجاوز الاختبار الصوتي</Text>
-              </Button>
-              <Button type="primary" onPress={updateScore}>
-                <Text style={styles.textButton}>إدخال</Text>
-              </Button>
-            </Flex>
-            {error !== '' && (
-              <View>
-                <Text style={styles.error}>{error}</Text>
-                <Text style={styles.error}>أعد المحاولة من جديد</Text>
-              </View>
-            )}
           </View>
         )}
       </Modal>

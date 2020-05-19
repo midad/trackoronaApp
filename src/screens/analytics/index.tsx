@@ -4,7 +4,7 @@
  * @flow
  */
 
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useContext} from 'react';
 import {
   StyleSheet,
   Text,
@@ -19,13 +19,15 @@ import {
 import {Flex, Button} from '@ant-design/react-native';
 import {secondaryFont, primaryFont} from '../../../utils/globalStyles/fonts';
 import {mainBlue} from '../../../utils/globalStyles/colors';
-import {getUserData, distance, getCurrentCoordinates, replaceObject} from '../../../utils/helpers';
+import {getUserData, distance, getCurrentCoordinates, replaceObject, regionFrom} from '../../../utils/helpers';
 import * as Progress from 'react-native-progress';
 import Spinner from 'react-native-loading-spinner-overlay';
 import Collapsible from 'react-native-collapsible';
 import api from '../../../utils/api';
 import Geolocation from '@react-native-community/geolocation';
 import { request, PERMISSIONS } from 'react-native-permissions';
+import { UserContext } from '../../context/UserContext';
+import MapView, { Marker, Circle } from 'react-native-maps';
 
 const calculateSocialConfinement = (locations, defaultLocation, defaultConfinementDistance) => {
   console.log({locations, defaultConfinementDistance})
@@ -50,17 +52,22 @@ const calculateSocialConfinement = (locations, defaultLocation, defaultConfineme
 }
 
 const Analytics: (navigation) => Promise<React$Node> = ({navigation}) => {
-  const [userData, setUserData] = useState({});
+  const {userData, setUserDataAndSyncStore} = useContext(UserContext);  
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const [defaultConfinementDistance, setDefaultConfinementDistance] = useState(50)
+  const [defaultConfinementDistance, setDefaultConfinementDistance] = useState(userData.user.defaultConfinementDistance);
+  const [currentCoordinates, setCurrentCoordinates] = useState({})
 
   useEffect(() => {
-    getUserData().then((data) => {
-      setUserData(data);
-      console.log({data})
-      setDefaultConfinementDistance(data.user.defaultConfinementDistance)
-      })
-  }, []);
+    console.log({hahahah:userData.user.defaultConfinementDistance}, "**********")
+    setDefaultConfinementDistance(userData.user.defaultConfinementDistance)
+  }, [userData])
+  // useEffect(() => {
+  //   getUserData().then((data) => {
+  //     setUserData(data);
+  //     console.log({data})
+  //     setDefaultConfinementDistance(data.user.defaultConfinementDistance)
+  //     })
+  // }, []);
 
   console.log({userData, defaultConfinementDistance})
 
@@ -72,8 +79,8 @@ const Analytics: (navigation) => Promise<React$Node> = ({navigation}) => {
     
     Geolocation.getCurrentPosition(
       async info => {
-        const data = await AsyncStorage.getItem('userData');
-        const userData = JSON.parse(data);
+        // const data = await AsyncStorage.getItem('userData');
+        // const userData = JSON.parse(data);
         console.log({info});
         
         const res = await api.put(`/users/updateDefaultLocation/${userData.user.id}`, {
@@ -84,6 +91,7 @@ const Analytics: (navigation) => Promise<React$Node> = ({navigation}) => {
           },
         });
         console.log({res})
+        setUserDataAndSyncStore(res.json());
       },
       err =>
         request(PERMISSIONS.ANDROID.ACCESS_COARSE_LOCATION).then(result => {
@@ -98,37 +106,50 @@ const Analytics: (navigation) => Promise<React$Node> = ({navigation}) => {
   }
 
   const setConfinementDistance = async (distance) => {
-    const data = await AsyncStorage.getItem('userData');
-    const userData = JSON.parse(data);
-    
-    api.put(`/users/updateDefaultConfinementDistance/${userData.user.id}`, {
-      defaultConfinementDistance: distance,
-    })
-    .then((res) => res.json())
-    .then(async (resJson) => {
-      console.log({resJson});
-      
-      const newUserDataJson = await replaceObject(
-        await getUserData(),
-        'user',
-        resJson,
-      );
-      console.log({newUserDataJson});
-      if (newUserDataJson.token) {
-        await AsyncStorage.setItem(
-          'userData',
-          JSON.stringify(newUserDataJson),
-        );
-        setDefaultConfinementDistance(newUserDataJson.user.defaultConfinementDistance)
-      }
-    })
+    // const data = await AsyncStorage.getItem('userData');
+    // const userData = JSON.parse(data);
+    console.log({distance})
+    try {
+      return api.put(`/users/updateDefaultConfinementDistance/${userData.user.id}`, {
+        defaultConfinementDistance: distance,
+      })
+      .then((res) => {console.log({res}); return res.json()})
+      .then(async (resJson) => {
+        console.log({resJson}, '++++++++')
+        setUserDataAndSyncStore(resJson);
+        setDefaultConfinementDistance(resJson.user.defaultConfinementDistance);
+      })
+    } catch (error) {
+      console.log({error})
+    }
   }
+
+
+  useEffect(() => {
+    Geolocation.getCurrentPosition(
+      async info => {
+        setCurrentCoordinates({latitude: info.coords.latitude, longitude: info.coords.longitude, accuracy: info.coords.accuracy})
+      },
+      err =>
+        request(PERMISSIONS.ANDROID.ACCESS_COARSE_LOCATION).then(result => {
+          if (result === 'granted') {
+            Geolocation.getCurrentPosition(
+              info => console.log({info}),
+              err => console.log({err}),
+            );
+          }
+        }),
+    );
+  }, [])
+
+  console.log({currentCoordinates});
 
   if(Object.keys(userData).length === 0) {
     return (
       <Spinner visible />
     )
   }
+
   return (
     <ScrollView>
       <SafeAreaView style={styles.container}>
@@ -166,6 +187,21 @@ const Analytics: (navigation) => Promise<React$Node> = ({navigation}) => {
         </TouchableOpacity>
         <Collapsible collapsed={isCollapsed}>
           <View style={{borderRadius: 25, backgroundColor: 'white', padding: 20, marginBottom: 20}}>
+            <View>
+              <MapView
+                style={{width: '100%', height: 400}}
+                showsUserLocation
+                region={regionFrom(currentCoordinates.latitude, currentCoordinates.longitude, defaultConfinementDistance/2)}
+              >
+                <Marker coordinate = {{latitude: currentCoordinates.latitude, longitude: currentCoordinates.longitude}} />
+                <Circle 
+                  center = {{latitude: currentCoordinates.latitude, longitude: currentCoordinates.longitude}}
+                  radius={defaultConfinementDistance}
+                  fillColor='rgba(255, 0, 20, .3)'
+                  strokeColor='red'
+                  strokeWidth={2} />
+              </MapView>
+            </View>
             <Button type='primary' onPress={setCurrentPosition}>
               <Text style={{fontFamily: secondaryFont}}>
                 تعيين هذا المكان كإحداثيات منزلك
@@ -210,7 +246,7 @@ const Analytics: (navigation) => Promise<React$Node> = ({navigation}) => {
               <View
                 style={{
                   width: 45,
-                  height: `${userData && userData.user.illnessScore ? userData?.user?.illnessScore : 0}%`,
+                  height: `${userData?.user?.illnessScore}%`,
                   borderRadius: 10,
                   backgroundColor: '#FF6E3F',
                   display: 'flex',
@@ -224,7 +260,7 @@ const Analytics: (navigation) => Promise<React$Node> = ({navigation}) => {
                     fontFamily: secondaryFont,
                     color: 'white',
                   }}>
-                  {userData && userData.user.illnessScore ? userData?.user?.illnessScore : 0}%
+                  {userData?.user?.illnessScore}%
                 </Text>
               </View>
             </View>
@@ -262,7 +298,7 @@ const Analytics: (navigation) => Promise<React$Node> = ({navigation}) => {
               <Text style={styles.cardText}>
                 عدد الأشخاص الذين الذين احتككت بهم
               </Text>
-              <Text style={styles.cardNumber}>{userData && userData.user.contactedPeople ? userData.user.contactedPeople.length : 0}</Text>
+              <Text style={styles.cardNumber}>{userData.user.contactedPeople.length}</Text>
             </View>
             <View style={{...styles.smallCard, height: 190}}>
               <Text style={styles.cardText}>نسبة التزامك بالعزل الاجتماعي</Text>

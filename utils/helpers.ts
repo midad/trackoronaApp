@@ -35,9 +35,7 @@ export const distance = (lat1, lon1, lat2, lon2, unit) => {
 };
 
 export const calculateHoursFromDate = date => {
-  console.log({date});
   const diff = new Date().getTime() - new Date(date).getTime();
-  console.log({diff});
   return Math.floor(diff / (1000 * 60 * 60));
 };
 
@@ -67,7 +65,7 @@ export const handleHours = hours => {
   }
 };
 
-export const getCurrentCoordinates = () => {
+export const getCurrentCoordinates = (userData, setUserDataAndSyncStore) => {
   Geolocation.setRNConfiguration({
     skipPermissionRequests: false,
     authorizationLevel: 'always',
@@ -75,16 +73,18 @@ export const getCurrentCoordinates = () => {
   
   Geolocation.getCurrentPosition(
     async info => {
-      const data = await AsyncStorage.getItem('userData');
-      const userData = JSON.parse(data);
+      // const data = await AsyncStorage.getItem('userData');
+      // const userData = JSON.parse(data);
       console.log({info});
-      await api.put(`/users/updateLocations/${userData.user.id}`, {
+      const res = await api.put(`/users/updateLocations/${userData.user.id}`, {
         locations: {
           latitude: info.coords.latitude.toString(),
           longitude: info.coords.longitude.toString(),
           createdAt: new Date(),
         },
       });
+      console.log('*******_____', res);
+      setUserDataAndSyncStore(res.json());
     },
     err =>
       request(PERMISSIONS.ANDROID.ACCESS_COARSE_LOCATION).then(result => {
@@ -96,4 +96,23 @@ export const getCurrentCoordinates = () => {
         }
       }),
   );
+}
+
+export const regionFrom = (lat, lon, distance) => {
+  distance = distance/2
+  const circumference = 40075
+  const oneDegreeOfLatitudeInMeters = 111.32 * 1000
+  const angularDistance = distance/circumference
+
+  const latitudeDelta = distance / oneDegreeOfLatitudeInMeters
+  const longitudeDelta = Math.abs(Math.atan2(
+          Math.sin(angularDistance)*Math.cos(lat),
+          Math.cos(angularDistance) - Math.sin(lat) * Math.sin(lat)))
+
+  return {
+      latitude: lat,
+      longitude: lon,
+      latitudeDelta,
+      longitudeDelta,
+  }
 }

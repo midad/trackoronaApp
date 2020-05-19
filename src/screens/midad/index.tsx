@@ -17,6 +17,22 @@ import Chart from '../../components/Chart';
 export default function Monitor() {
   const navigation = useNavigation();
   const [mode, setMode] = useState('auto');
+  const [temp, setTemp] = useState(37);
+  const [humidity, setHumidity] = useState(60);
+  const [pression, setPression] = useState(766);
+
+  React.useEffect(() => {
+    let interval = setInterval(() => {
+      setTemp(Math.floor(Math.random() * 5) + 35);
+      setHumidity(Math.floor(Math.random() * 15) + 70);
+      setPression(Math.floor(Math.random() * 112) + 888);
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+    }
+  });
+
   return (
     <ScrollView>
       <SafeAreaView style={s.container}>
@@ -47,21 +63,21 @@ export default function Monitor() {
           <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
             <View style={s.kpiContainer}>
               <View style={s.kpiTop}>
-                <Text style={{...s.kpiValue, color: '#fb7e18'}}>..</Text>
+                <Text style={{...s.kpiValue, color: '#fb7e18'}}>{temp}</Text>
                 <Text style={{...s.kpiUnit, color: '#fb7e18'}}>°C</Text>
               </View>
               <Text style={{...s.kpiName, color: '#fb7e18'}}>T. exp</Text>
             </View>
             <View style={s.kpiContainer}>
               <View style={s.kpiTop}>
-                <Text style={{...s.kpiValue, color: '#00b598'}}>..</Text>
+                <Text style={{...s.kpiValue, color: '#00b598'}}>{humidity}</Text>
                 <Text style={{...s.kpiUnit, color: '#00b598'}}>%</Text>
               </View>
               <Text style={{...s.kpiName, color: '#00b598'}}>Humidité</Text>
             </View>
             <View style={s.kpiContainer}>
               <View style={s.kpiTop}>
-                <Text style={{...s.kpiValue, color: '#00b598'}}>..</Text>
+                <Text style={{...s.kpiValue, color: '#00b598'}}>{pression}</Text>
                 <Text style={{...s.kpiUnit, color: '#00b598'}}>mBar</Text>
               </View>
               <Text style={{...s.kpiName, color: '#00b598'}}>Pression</Text>
@@ -76,12 +92,15 @@ export default function Monitor() {
           {/*/>*/}
           {/*</View>*/}
           <View style={s.chartContainer}>
-            <Chart name="Débit" unit="L/min" min={-80} max={80} />
+            <Chart name="Température" unit="°C" min={9} max={60} instantValue={temp} />
           </View>
           <View style={s.chartContainer}>
-            <Chart name="Volume insuflé" unit="mL" min={0} max={1000} />
+            <Chart name="Humidité" unit="%" min={0} max={100} instantValue={humidity} />
           </View>
-          <View style={s.overlay}>
+          <View style={s.chartContainer}>
+            <Chart name="Pression" unit="mBar" min={500} max={1060} instantValue={pression} />
+          </View>
+          {/* <View style={s.overlay}>
             <Text
               style={{
                 textAlign: 'center',
@@ -93,7 +112,7 @@ export default function Monitor() {
               }}>
               المرجو ربط قناع مداد بالتطبيق لتتبع المؤشرات الحيوية الخاصة بك
             </Text>
-          </View>
+          </View> */}
         </View>
       </SafeAreaView>
     </ScrollView>
