@@ -47,15 +47,15 @@ const calculateSocialConfinement = (locations, defaultLocation, defaultConfineme
         count -= 1;
       }
     }
-    return count/locations?.length * 100;
+    return count/locations?.length;
   }
 }
 
 const Analytics: (navigation) => Promise<React$Node> = ({navigation}) => {
-  const {userData, setUserDataAndSyncStore} = useContext(UserContext);  
+  const {userData, setUserDataAndSyncStore} = useContext<any>(UserContext);  
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [defaultConfinementDistance, setDefaultConfinementDistance] = useState(userData.user.defaultConfinementDistance);
-  const [currentCoordinates, setCurrentCoordinates] = useState({})
+  const [currentCoordinates, setCurrentCoordinates] = useState<{[key: string] : number}>({})
 
   useEffect(() => {
     console.log({hahahah:userData.user.defaultConfinementDistance}, "**********")
@@ -142,7 +142,7 @@ const Analytics: (navigation) => Promise<React$Node> = ({navigation}) => {
     );
   }, [])
 
-  console.log({currentCoordinates});
+  // console.log({currentCoordinates, dddddd: regionFrom(currentCoordinates?.latitude, currentCoordinates?.longitude, defaultConfinementDistance/2) });
 
   if(Object.keys(userData).length === 0) {
     return (
@@ -187,21 +187,22 @@ const Analytics: (navigation) => Promise<React$Node> = ({navigation}) => {
         </TouchableOpacity>
         <Collapsible collapsed={isCollapsed}>
           <View style={{borderRadius: 25, backgroundColor: 'white', padding: 20, marginBottom: 20}}>
+            {Object.keys(currentCoordinates).length > 0 &&
             <View>
               <MapView
                 style={{width: '100%', height: 400}}
                 showsUserLocation
-                region={regionFrom(currentCoordinates.latitude, currentCoordinates.longitude, defaultConfinementDistance/2)}
+                region={regionFrom(currentCoordinates?.latitude, currentCoordinates?.longitude, defaultConfinementDistance/2)}
               >
-                <Marker coordinate = {{latitude: currentCoordinates.latitude, longitude: currentCoordinates.longitude}} />
+                <Marker coordinate = {{latitude: currentCoordinates?.latitude, longitude: currentCoordinates?.longitude}} />
                 <Circle 
-                  center = {{latitude: currentCoordinates.latitude, longitude: currentCoordinates.longitude}}
+                  center = {{latitude: currentCoordinates?.latitude, longitude: currentCoordinates?.longitude}}
                   radius={defaultConfinementDistance}
                   fillColor='rgba(255, 0, 20, .3)'
                   strokeColor='red'
                   strokeWidth={2} />
               </MapView>
-            </View>
+            </View> }
             <Button type='primary' onPress={setCurrentPosition}>
               <Text style={{fontFamily: secondaryFont}}>
                 تعيين هذا المكان كإحداثيات منزلك
@@ -309,7 +310,7 @@ const Analytics: (navigation) => Promise<React$Node> = ({navigation}) => {
                   marginTop: 20,
                 }}>
                 <Progress.Circle
-                  progress={userData && calculateSocialConfinement(userData.user.locations, userData.user.defaultLocation, defaultConfinementDistance)/100}
+                  progress={calculateSocialConfinement(userData.user.locations, userData.user.defaultLocation, defaultConfinementDistance)}
                   color="#FF6E3F"
                   unfilledColor="#FFE9E2"
                   size={75}
