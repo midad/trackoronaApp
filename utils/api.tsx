@@ -51,9 +51,9 @@ const api = {
     let headers = [];
     headers['Content-Type'] = 'application/json';
     headers['Accept'] = 'application/json';
-
     const userId = await AsyncStorage.getItem('userId');
     const userData = JSON.parse(await AsyncStorage.getItem('userData'));
+    console.log({userData});
 
     body.access_token = userData.token;
     console.log({body, url, API_URL});

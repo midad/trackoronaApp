@@ -4,7 +4,7 @@
  * @flow
  */
 
-import React, {useState} from 'react';
+import React, {useState, useEffect, useContext} from 'react';
 import {
   StyleSheet,
   Text,
@@ -12,15 +12,15 @@ import {
   Keyboard,
   AsyncStorage,
 } from 'react-native';
-import {
-  Button,
-} from '@ant-design/react-native';
+import {Button} from '@ant-design/react-native';
 import {getUniqueId} from 'react-native-device-info';
 import api from '../../../utils/api';
 import {secondaryFont} from '../../../utils/globalStyles/fonts';
 import {mainGrey, mainBlue} from '../../../utils/globalStyles/colors';
 import {TextInput} from 'react-native-gesture-handler';
 import Spinner from 'react-native-loading-spinner-overlay';
+import auth from '@react-native-firebase/auth';
+import { UserContext } from '../../context/UserContext';
 
 const CodeVerification: (navigation, route) => React$Node = ({
   navigation,
@@ -28,8 +28,40 @@ const CodeVerification: (navigation, route) => React$Node = ({
 }) => {
   const [verificationCode, setVerificationCode] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const [error, setError] = useState('')
-  const {confirmResult} = route.params;
+  const [error, setError] = useState('');
+  const {confirmResult, phone} = route.params;
+  const {userData, setUserDataAndSyncStore} = useContext<any>(UserContext);  
+
+  useEffect(() => {
+    auth().onAuthStateChanged(async user => {
+      console.log('*********///////*********', {user});
+      if (user) {
+        let deviceId = getUniqueId();
+        return api  
+          .post('/users', {
+            phone,
+            deviceId,
+            firebaseUid: user.uid,
+          })
+          .then(resp => resp.json())
+          .then(async resJson => {
+            console.log({resJson, userData, phone});
+            if (resJson.token) {
+              setUserDataAndSyncStore(resJson);
+              navigation.navigate('Profil');
+            }
+            // if(resJson.message === 'phone already registered') {
+            //   navigation.navigate('Profil');
+            // }
+          });
+      }
+      // else
+      // {
+      //     // reset state if you need to
+      //     dispatch({ type: "reset_user" });
+      // }
+    });
+  }, []);
 
   const onVerificationCode = async () => {
     setIsSending(true);
@@ -39,7 +71,7 @@ const CodeVerification: (navigation, route) => React$Node = ({
       let deviceId = getUniqueId();
       const {phone, gender, age, diabetes, cardio, pneumo} = userData;
 
-      console.log({phone, verificationCode})
+      console.log({phone, verificationCode});
       confirmResult.confirm(verificationCode).then(async respFirebase => {
         console.log({respFirebase, phone});
         if (respFirebase.phoneNumber === phone && respFirebase.uid) {
@@ -53,7 +85,7 @@ const CodeVerification: (navigation, route) => React$Node = ({
             .then(async resJson => {
               console.log({resJson});
               if (resJson.token) {
-                await AsyncStorage.setItem('userData', JSON.stringify(resJson));
+                setUserDataAndSyncStore(resJson);
                 navigation.navigate('Profil');
               }
             });
@@ -61,7 +93,7 @@ const CodeVerification: (navigation, route) => React$Node = ({
       });
     } catch (error) {
       console.log({error});
-      setError(error[0])
+      setError(error[0]);
     } finally {
       setIsSending(false);
     }
@@ -102,7 +134,7 @@ const styles = StyleSheet.create({
     paddingLeft: 40,
     direction: 'rtl',
     flex: 1,
-    backgroundColor: 'white'
+    backgroundColor: 'white',
   },
   detailsText: {
     fontSize: 20,
@@ -133,5 +165,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: secondaryFont,
     color: 'white',
-  }
+  },
 });

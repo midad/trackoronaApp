@@ -141,7 +141,7 @@ const Home: (navigation) => React$Node = ({navigation}) => {
 
   useEffect(() => {
     getCurrentCoordinates(userData, setUserDataAndSyncStore);
-  });
+  }, []);
 
   const getStats = () => {
     try {

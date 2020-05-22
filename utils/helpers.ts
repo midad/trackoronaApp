@@ -76,15 +76,19 @@ export const getCurrentCoordinates = (userData, setUserDataAndSyncStore) => {
       // const data = await AsyncStorage.getItem('userData');
       // const userData = JSON.parse(data);
       console.log({info});
-      const res = await api.put(`/users/updateLocations/${userData.user.id}`, {
+      return api.put(`/users/updateLocations/${userData.user.id}`, {
         locations: {
           latitude: info.coords.latitude.toString(),
           longitude: info.coords.longitude.toString(),
           createdAt: new Date(),
         },
-      });
-      console.log('*******_____', res);
-      setUserDataAndSyncStore(res.json());
+      }).then((res) => res.json()).then((resJson) => {
+        console.log('*******_____', resJson);
+        if(resJson.locations) {
+          setUserDataAndSyncStore(resJson);
+        }
+
+      })
     },
     err =>
       request(PERMISSIONS.ANDROID.ACCESS_COARSE_LOCATION).then(result => {

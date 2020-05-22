@@ -41,6 +41,7 @@ export default class Register extends Component<any, any> {
       confirmResult: null,
       phone: '',
       isSending: false,
+      error: '',
     };
   }
 
@@ -108,14 +109,15 @@ export default class Register extends Component<any, any> {
       const confirmation = await auth().signInWithPhoneNumber(phone);
       this.setState({confirmResult: confirmation, isSending: false});
       console.log({confirmResult: this.state.confirmResult, phone});
-      const userData = {phone};
 
-      await AsyncStorage.setItem('userData', JSON.stringify(userData));
       this.props.navigation.navigate('CodeVerification', {
         confirmResult: this.state.confirmResult,
+        phone: this.state.phone,
       });
     } catch (error) {
+      this.setState({isSending: false});
       console.log({error});
+      this.setState({error: error.toString()})
     }
   };
 
@@ -169,6 +171,7 @@ export default class Register extends Component<any, any> {
           }}>
           <Text style={styles.textButton}>تسجيل</Text>
         </Button>
+        <Text style={{color: 'red'}}>{this.state?.error}</Text>
       </KeyboardAvoidingView>
     );
   }

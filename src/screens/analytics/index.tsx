@@ -82,16 +82,20 @@ const Analytics: (navigation) => Promise<React$Node> = ({navigation}) => {
         // const data = await AsyncStorage.getItem('userData');
         // const userData = JSON.parse(data);
         console.log({info});
-        
-        const res = await api.put(`/users/updateDefaultLocation/${userData.user.id}`, {
+      
+        return api.put(`/users/updateDefaultLocation/${userData.user.id}`, {
           defaultLocation: {
             latitude: info.coords.latitude.toString(),
             longitude: info.coords.longitude.toString(),
             createdAt: new Date(),
           },
-        });
-        console.log({res})
-        setUserDataAndSyncStore(res.json());
+        }).then((res) => res.json()).then((resJson) => {
+          console.log('*******_____**', resJson);
+          if(resJson.defaultLocation) {
+            setUserDataAndSyncStore(resJson);
+          }
+  
+        })
       },
       err =>
         request(PERMISSIONS.ANDROID.ACCESS_COARSE_LOCATION).then(result => {
@@ -194,7 +198,7 @@ const Analytics: (navigation) => Promise<React$Node> = ({navigation}) => {
                 showsUserLocation
                 region={regionFrom(currentCoordinates?.latitude, currentCoordinates?.longitude, defaultConfinementDistance/2)}
               >
-                <Marker coordinate = {{latitude: currentCoordinates?.latitude, longitude: currentCoordinates?.longitude}} />
+                <Marker coordinate = {{latitude: currentCoordinates?.latitude, longitude: currentCoordinates?.longitude}} draggable />
                 <Circle 
                   center = {{latitude: currentCoordinates?.latitude, longitude: currentCoordinates?.longitude}}
                   radius={defaultConfinementDistance}

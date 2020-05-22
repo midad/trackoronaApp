@@ -4,7 +4,7 @@
  * @flow
  */
 
-import React, {useState} from 'react';
+import React, {useState, useContext} from 'react';
 import {
   StyleSheet,
   Text,
@@ -22,6 +22,7 @@ import {mainGrey, mainBlue} from '../../../utils/globalStyles/colors';
 import Spinner from 'react-native-loading-spinner-overlay';
 import Header from '../../components/header';
 import {replaceObject, getUserData} from '../../../utils/helpers';
+import {UserContext} from '../../context/UserContext';
 
 const Profil: (navigation) => React$Node = ({navigation}) => {
   const [isSending, setIsSending] = useState(false);
@@ -35,6 +36,7 @@ const Profil: (navigation) => React$Node = ({navigation}) => {
     diabetes: false,
     pneumo: false,
   });
+  const {userData, setUserDataAndSyncStore} = useContext(UserContext);
 
   const onSubmit = async () => {
     setIsSending(true);
@@ -65,19 +67,8 @@ const Profil: (navigation) => React$Node = ({navigation}) => {
         })
         .then(resp => resp.json())
         .then(async resJson => {
-          const newUserDataJson = await replaceObject(
-            await getUserData(),
-            'user',
-            resJson,
-          );
-          console.log({newUserDataJson});
-          if (newUserDataJson.token) {
-            await AsyncStorage.setItem(
-              'userData',
-              JSON.stringify(newUserDataJson),
-            );
-            navigation.navigate('Home');
-          }
+          setUserDataAndSyncStore(resJson);
+          navigation.navigate('Home');
         });
     } catch (error) {
       console.log({error});
@@ -86,6 +77,7 @@ const Profil: (navigation) => React$Node = ({navigation}) => {
       setIsSending(false);
     }
   };
+  
   return (
     <KeyboardAvoidingView style={styles.container} behavior="position">
       <Header />

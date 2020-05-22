@@ -62,13 +62,19 @@ const App: () => React$Node = () => {
 
   const setUserDataAndSyncStore = async newUserData => {
     try {
-      console.log({newUserData}, '_______+++++');
-      const newUserDataJson = await replaceObject(
-        await getUserData(),
-        'user',
-        newUserData,
-      );
+      const oldUserData = await getUserData();
+      let newUserDataJson = newUserData;
+      console.log({newUserData, oldUserData}, '_______+++++');
+      if (!!oldUserData) {
+        newUserDataJson = await replaceObject(oldUserData, 'user', newUserData);
+      }
       setUserData(newUserDataJson);
+      if (!!newUserDataJson.token && !!newUserDataJson.user) {
+        setIsLogged(true);
+      }
+      if (newUserDataJson?.user?.age) {
+        setIsProfilFilled(true);
+      }
       await AsyncStorage.removeItem('userData');
       await AsyncStorage.setItem('userData', JSON.stringify(newUserDataJson));
       return true;
@@ -140,83 +146,70 @@ const App: () => React$Node = () => {
   //     </NavigationContainer>
   //   );
   // }
-
+  const shouldGoHome = isLogged && isProfilFilled;
+console.log({userData})
   return (
     <UserContext.Provider
       value={{
         userData: userData,
         setUserDataAndSyncStore: setUserDataAndSyncStore,
       }}>
+      {console.log({shouldGoHome})}
       <NavigationContainer>
         <Navigator
-          initialRouteName={isLogged && isProfilFilled ? 'Home' : 'Register'}>
-          {isLogged && isProfilFilled ? (
-            <>
-              <Screen
-                name="Home"
-                component={Home}
-                options={{headerShown: false}}
-              />
-              <Screen
-                name="Analytics"
-                component={Analytics}
-                options={{headerShown: false}}
-              />
-              <Screen
-                name="Test"
-                component={Test}
-                options={{headerShown: false}}
-              />
-              <Screen
-                name="AutoTest"
-                component={AutoTest}
-                options={{headerShown: false}}
-              />
-              <Screen
-                name="VoiceTest"
-                component={VoiceTest}
-                options={{headerShown: false}}
-              />
-              <Screen
-                name="Distribution"
-                component={Distribution}
-                options={{headerShown: false}}
-              />
-              <Screen
-                name="Midad"
-                component={Midad}
-                options={{headerShown: false}}
-              />
-            </>
-          ) : (
-            <>
-              <Screen
-                name="Register"
-                component={Register}
-                options={{headerShown: false}}
-              />
-              <Screen
-                name="CodeVerification"
-                component={CodeVerification}
-                options={{
-                  headerTitle: 'التحقق من الهوية',
-                  headerTitleAlign: 'center',
-                  headerTintColor: mainBlack,
-                  headerTitleStyle: {
-                    fontWeight: 'bold',
-                    fontSize: 26,
-                    color: mainBlack,
-                    fontFamily: primaryFont,
-                  },
-                }}
-              />
-              <Screen
-                name="Profil"
-                component={Profil}
-                options={{headerShown: false}}
-              />
-            </>
-          )}
+          initialRouteName={shouldGoHome ? 'Home' : 'Register'}>
+          <Screen name="Home" component={Home} options={{headerShown: false}} />
+          <Screen
+            name="Analytics"
+            component={Analytics}
+            options={{headerShown: false}}
+          />
+          <Screen name="Test" component={Test} options={{headerShown: false}} />
+          <Screen
+            name="AutoTest"
+            component={AutoTest}
+            options={{headerShown: false}}
+          />
+          <Screen
+            name="VoiceTest"
+            component={VoiceTest}
+            options={{headerShown: false}}
+          />
+          <Screen
+            name="Distribution"
+            component={Distribution}
+            options={{headerShown: false}}
+          />
+          <Screen
+            name="Midad"
+            component={Midad}
+            options={{headerShown: false}}
+          />
+          <Screen
+            name="Register"
+            component={Register}
+            options={{headerShown: false}}
+          />
+          <Screen
+            name="CodeVerification"
+            component={CodeVerification}
+            options={{
+              headerTitle: 'التحقق من الهوية',
+              headerTitleAlign: 'center',
+              headerTintColor: mainBlack,
+              headerTitleStyle: {
+                fontWeight: 'bold',
+                fontSize: 26,
+                color: mainBlack,
+                fontFamily: primaryFont,
+              },
+            }}
+          />
+          <Screen
+            name="Profil"
+            component={Profil}
+            options={{headerShown: false}}
+          />
         </Navigator>
       </NavigationContainer>
     </UserContext.Provider>
